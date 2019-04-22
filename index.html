@@ -1,0 +1,97 @@
+<head>Truffle-Contract Test</head>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+    crossorigin="anonymous">
+
+<body>
+
+    <h1>I am Friend with...</h1>
+
+    <h2 id="friend"></h2>
+
+    <label for="name" class="col-lg-2 control-label">Name: </label>
+    <input type="text" id="name">
+    <br>
+    <label for="age" class="col-lg-2 control-label">Age: </label>
+    <input type="text" id="age">
+    <br>
+    <button id="button">Update Friend</button>
+
+</body>
+<script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+<script type="text/javascript" src="./js/web3.min.js"></script>
+<script type="text/javascript" src="./js/truffle-contract.js"></script>
+<script type="text/javascript">
+    // Is there an injected web3 instance?
+    if (typeof web3 !== 'undefined') {
+        var web3Provider = web3.currentProvider;
+    } else {
+        // If no injected web3 instance is detected, fall back to Ganache
+        var web3Provider = new Web3.providers.HttpProvider('http://104.248.102.214:3333');
+    }
+    //web3 = new Web3(web3Provider); //не нужно
+
+    /* 
+     * @dev JSON контракта
+     * @dev Вместо deployed() используем at(contractAddr):
+     * FriendContract.deployed().then(function(instance){ .... }); 
+     */
+    $.getJSON('./build/contracts/Friend.json', function (data) {
+        /*
+         * @dev Имплиментируем abi и json контракта с помощью библиотек truffle-contract.js и web3.js
+         */
+        var FriendContract = TruffleContract(data);
+        FriendContract.setProvider(web3Provider);
+
+
+        /*
+         * @dev Назначаем переменные и адреса
+         */
+        var ceoAddr = "0xd60ae581c6e043ad3ca460f666b1718898a902a3";
+        var contractAddr = "0xf4da59e34c2a03cb846cabeb4537cda1ce9f14ff";
+        
+        var friendinstance;
+
+        var newName;
+        var newAge;
+
+        /*
+         * @dev Запрос на получение данных из контракта
+         */
+        FriendContract.at(contractAddr).then(function(instance){
+                friendinstance = instance;                  
+                return friendinstance.getFriend({from: ceoAddr});
+            }).then(function(result) {
+                console.log(result);
+                var str = result.toString();
+                var friendDetails = str.split(",");
+                $('#friend').html("Name: "+friendDetails[0]+"<br>"+"Age: "+friendDetails[1]);
+            }).catch(function(err) {
+                console.log(err.message);          
+        });
+
+        /*
+         * @dev Запрос на запись данных в контракт
+         */
+        $("button").click(function () {
+            FriendContract.at(contractAddr).then(function(instance){
+                friendinstance = instance;
+
+                newName = $("#name").val();
+                newAge = $("#age").val();
+
+                console.log(newName + "\n" + newAge);
+                
+                return friendinstance.setFriend(newName, newAge, {from: ceoAddr});
+            }).then(function(result) {
+                console.log(result);
+                $('#friend').html("Name: " + newName + "<br>" + "Age: " + newAge);
+            }).catch(function(err) {
+                console.log(err.message);          
+            });
+        })
+    });
+</script>
+
+</html>
