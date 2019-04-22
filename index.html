@@ -72,6 +72,18 @@
         });
 
         /*
+         * @dev Тоже самое на ES6
+         */
+        function getFriend () {
+            return new Promise(async (resolve, reject) => {
+                let meta = await FriendContract.at(contractAddr);
+                let balance = await meta.getFriend.call();
+                console.log('Status: '+balance);
+            });
+        }
+        console.log(getFriend());
+
+        /*
          * @dev Запрос на запись данных в контракт
          */
         $("button").click(function () {
